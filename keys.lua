@@ -31,6 +31,43 @@ local function nav_key(key)
 	}
 end
 
+-- Fuzzy project launcher: scans for git repos under HOME and opens each in
+-- its own named workspace so existing sessions are preserved in the background.
+local function launch_project(win, pane)
+	local home = wezterm.home_dir
+	local ok, stdout = wezterm.run_child_process({
+		"fd", "-H", "-t", "d", "--max-depth", "5",
+		"--exclude", "node_modules", "--exclude", ".cache",
+		"--exclude", ".cargo", "--exclude", ".local",
+		"^.git$", home,
+	})
+	if not ok then return end
+	local choices, seen = {}, {}
+	for path in stdout:gmatch("[^\n]+") do
+		local project = path:gsub("/.git$", "")
+		if not seen[project] then
+			seen[project] = true
+			table.insert(choices, {
+				id    = project,
+				label = project:gsub(home .. "/", "~/"),
+			})
+		end
+	end
+	win:perform_action(act.InputSelector({
+		title   = " Projects",
+		choices = choices,
+		fuzzy   = true,
+		action  = wezterm.action_callback(function(w, p, id)
+			if id then
+				w:perform_action(act.SwitchToWorkspace({
+					name  = id:match("[^/]+$"),
+					spawn = { cwd = id },
+				}), p)
+			end
+		end),
+	}), pane)
+end
+
 function M.apply(config)
 	config.leader = { key = "s", mods = "CTRL", timeout_milliseconds = 1000 }
 
@@ -71,6 +108,9 @@ function M.apply(config)
 
 		-- ── Pass CTRL+S through when leader is pressed twice ─────────────
 		{ key = "s", mods = "LEADER|CTRL", action = act.SendKey({ key = "s", mods = "CTRL" }) },
+
+		-- ── Project workspace launcher ────────────────────────────────────
+		{ key = "p", mods = "LEADER", action = wezterm.action_callback(launch_project) },
 	}
 
 	-- ALT+1..9 to jump to tab by index

@@ -26,13 +26,7 @@ Leader key: `CTRL+S` (1 s timeout). Press `CTRL+S` twice to send raw `CTRL+S` to
 | Navigate | `ALT` + `h` / `j` / `k` / `l` |
 | Resize | `ALT+SHIFT` + `H` / `J` / `K` / `L` |
 
-Pane navigation is smart: when Neovim is focused, `ALT+hjkl` is forwarded to Neovim instead of switching WezTerm panes. Add the following to your Neovim `keymaps.lua` to complete the integration:
-
-```lua
-for _, k in ipairs({ "h", "j", "k", "l" }) do
-  vim.keymap.set({ "n", "t" }, "<A-" .. k .. ">", "<C-w>" .. k)
-end
-```
+Pane navigation is smart: when Neovim is focused, `ALT+hjkl` is forwarded to Neovim instead of switching WezTerm panes. Neovim maps `<A-hjkl>` to `smart-splits.nvim` cursor movement, so the key crosses both Neovim split and WezTerm pane boundaries transparently.
 
 ### Tabs
 
@@ -43,6 +37,14 @@ end
 | Previous / next | `ALT` `[` / `ALT` `]` |
 | Switch by number | `ALT` `1`–`9` |
 | Move tab left / right | `ALT+SHIFT` `{` / `}` |
+
+### Workspaces
+
+| Action | Keys |
+|---|---|
+| Project launcher | `LEADER` `p` |
+
+`LEADER+p` scans `$HOME` (up to depth 5) for git repositories using `fd`, presents them in a fuzzy picker, and opens the selected directory in a named workspace. Existing workspaces are preserved in the background and can be switched back to with the same picker.
 
 ### Other
 
